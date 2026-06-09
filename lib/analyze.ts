@@ -19,7 +19,10 @@ import type { Metrics } from "./types";
 
 // Modèle Sonnet courant (vérifié dans la doc Anthropic au moment du build).
 const MODEL = "claude-sonnet-4-6";
-const MAX_TOKENS = 1500;
+// 3000 tokens : marge nécessaire pour que le JSON pédagogique complet (synthèse
+// + forces + vigilances avec principe & détail + pistes) ne soit jamais tronqué.
+// 1500 coupait la sortie en plein milieu d'un tableau → JSON invalide.
+const MAX_TOKENS = 3000;
 
 export class AnalysisError extends Error {}
 

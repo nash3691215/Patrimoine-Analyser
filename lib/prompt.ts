@@ -38,6 +38,9 @@ RÈGLE PÉDAGOGIQUE POUR CHAQUE VIGILANCE
 - "detail" = l'APPLICATION de ce principe aux chiffres de CE patrimoine.
 Une vigilance qui ne fait que pointer un chiffre sans enseigner un principe est un échec.
 
+CONCISION
+Va à l'essentiel : 3 à 4 forces, 3 à 4 vigilances, 3 à 4 pistes. "principe" et "detail" font 2 à 3 phrases chacun, "synthese" 3 à 4 phrases. Densité pédagogique, pas de remplissage.
+
 SCORE DE ROBUSTESSE (0–100)
 Note la capacité du patrimoine à encaisser un choc (perte d'emploi, marché baissier, besoin de cash) sans casse majeure. Repères : coussin de liquidité suffisant, diversification réelle, adéquation horizon/risque, absence de fragilité dominante. Un patrimoine très concentré ou sans liquidité doit être pénalisé même si le total est élevé.
 

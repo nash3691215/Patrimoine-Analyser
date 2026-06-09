@@ -18,6 +18,9 @@ import { analyzeRequestSchema } from "@/lib/schema";
 
 // Exécution Node (le SDK Anthropic n'est pas garanti sur le runtime Edge).
 export const runtime = "nodejs";
+// Marge pour l'appel modèle (plafond Vercel Hobby). La génération JSON
+// pédagogique prend ~20–30 s ; on laisse de la marge avant coupure plateforme.
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   // 1. Corps JSON parsable ?
