@@ -61,7 +61,7 @@ export function AnalysisResult({
             {streaming && (
               <span
                 aria-hidden
-                className="ml-0.5 inline-block h-4 w-2 animate-pulse rounded-sm bg-accent/60 align-text-bottom"
+                className="ml-0.5 inline-block h-4 w-2 animate-pulse rounded-sm bg-accent/60 align-text-bottom motion-reduce:animate-none"
               />
             )}
           </p>

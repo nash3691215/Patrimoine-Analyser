@@ -144,7 +144,7 @@ export function PatrimoineForm({
                     onChange({ ...value, horizon: opt.id as Horizon })
                   }
                   className={
-                    "rounded-lg border px-3 py-2 text-left text-sm transition " +
+                    "rounded-lg border px-3 py-2 text-left text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent " +
                     (active
                       ? "border-accent bg-accent/5 text-accent"
                       : "border-slate-300 bg-white text-slate-600 hover:border-slate-400")
@@ -164,7 +164,7 @@ export function PatrimoineForm({
         <button
           type="submit"
           disabled={loading || total <= 0}
-          className="inline-flex items-center justify-center rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center justify-center rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-accent/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? "Analyse en cours…" : "Lancer la radiographie"}
         </button>
@@ -172,7 +172,7 @@ export function PatrimoineForm({
           type="button"
           onClick={onReset}
           disabled={loading}
-          className="text-sm font-medium text-slate-500 hover:text-slate-700 disabled:opacity-50"
+          className="rounded text-sm font-medium text-slate-500 hover:text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50"
         >
           Réinitialiser
         </button>

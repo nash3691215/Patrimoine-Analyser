@@ -220,7 +220,7 @@ export function RadiographieTool({
             <AnalysisResult analysis={preview} streaming />
           ) : (
             <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
-              <div className="mx-auto mb-3 h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-accent" />
+              <div className="mx-auto mb-3 h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-accent motion-reduce:animate-none" />
               Connexion au modèle…
             </div>
           ))}

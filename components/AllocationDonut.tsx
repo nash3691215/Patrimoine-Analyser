@@ -37,7 +37,13 @@ export function AllocationDonut({ metrics }: { metrics: Metrics }) {
   }
 
   return (
-    <div className="h-72 w-full" aria-label="Répartition de l'allocation patrimoniale">
+    <div
+      className="h-72 w-full"
+      role="img"
+      aria-label={`Répartition de l'allocation patrimoniale : ${data
+        .map((d) => `${d.name} ${d.pct} %`)
+        .join(", ")}`}
+    >
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
