@@ -8,7 +8,9 @@ import { MetricsCards } from "./MetricsCards";
 import { PatrimoineForm } from "./PatrimoineForm";
 import { SaveAnalysisButton } from "./SaveAnalysisButton";
 import { computeMetrics } from "@/lib/metrics";
+import { parsePartialAnalysis, type PartialAnalysis } from "@/lib/partial-json";
 import { SEED_PATRIMOINE } from "@/lib/seed";
+import DEMO_ANALYSIS from "@/lib/demo-analysis.json";
 import type { Analysis } from "@/lib/schema";
 import type { Metrics, PatrimoineInput } from "@/lib/types";
 
@@ -31,6 +33,16 @@ interface ApiResult {
   analysis: Analysis;
 }
 
+/**
+ * Radiographie du profil de démonstration, générée une fois par le même
+ * pipeline (métriques en code → Claude → validation Zod) puis figée : la
+ * valeur de l'outil est visible à l'ouverture, en <1 s, sans appel API.
+ */
+const DEMO_RESULT: ApiResult = {
+  metrics: computeMetrics(SEED_PATRIMOINE),
+  analysis: DEMO_ANALYSIS as Analysis,
+};
+
 export function RadiographieTool({
   isAuthenticated,
 }: {
@@ -40,31 +52,98 @@ export function RadiographieTool({
   const [input, setInput] = useState<PatrimoineInput>(SEED_PATRIMOINE);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<ApiResult | null>(null);
+  const [result, setResult] = useState<ApiResult | null>(DEMO_RESULT);
+  // L'analyse affichée est-elle l'exemple pré-calculé ?
+  const [isDemo, setIsDemo] = useState(true);
+  // La saisie a-t-elle changé depuis l'analyse affichée ?
+  const [stale, setStale] = useState(false);
+  // Aperçu partiel pendant le streaming (remplacé par l'objet validé à la fin).
+  const [preview, setPreview] = useState<PartialAnalysis | null>(null);
 
   // Aperçu des métriques en direct (calcul déterministe, côté client),
   // avant même de solliciter l'IA.
   const livePreview = computeMetrics(input);
 
+  const updateInput = (next: PatrimoineInput) => {
+    setInput(next);
+    if (result) setStale(true);
+  };
+
   const runAnalysis = async () => {
     setLoading(true);
     setError(null);
+    setPreview(null);
     try {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(input),
       });
-      const data = await res.json();
-      if (!res.ok) {
+
+      // Erreurs de saisie : réponse JSON classique, avant ouverture du flux.
+      if (!res.ok || !res.body) {
+        const data = await res.json().catch(() => null);
         setError(data?.error ?? "Une erreur est survenue.");
-        setResult(null);
         return;
       }
-      setResult({ metrics: data.metrics, analysis: data.analysis });
+
+      // Flux NDJSON : metrics → delta… → done | error.
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let rawText = "";
+      let metrics: Metrics | null = null;
+      let finished = false;
+
+      const handleLine = (line: string) => {
+        if (!line.trim()) return;
+        let event: { type?: string; [k: string]: unknown };
+        try {
+          event = JSON.parse(line);
+        } catch {
+          return; // ligne corrompue : on attend la suivante
+        }
+        if (event.type === "metrics") {
+          metrics = event.metrics as Metrics;
+        } else if (event.type === "delta") {
+          rawText += event.text as string;
+          const partial = parsePartialAnalysis(rawText);
+          if (partial) setPreview(partial);
+        } else if (event.type === "done") {
+          setResult({
+            metrics: metrics ?? livePreview,
+            analysis: event.analysis as Analysis,
+          });
+          setIsDemo(false);
+          setStale(false);
+          setPreview(null);
+          finished = true;
+        } else if (event.type === "error") {
+          setError(event.error as string);
+          setPreview(null);
+          finished = true;
+        }
+      };
+
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let nl: number;
+        while ((nl = buffer.indexOf("\n")) !== -1) {
+          handleLine(buffer.slice(0, nl));
+          buffer = buffer.slice(nl + 1);
+        }
+      }
+      handleLine(buffer);
+
+      if (!finished) {
+        setError("La connexion a été interrompue. Réessayez.");
+        setPreview(null);
+      }
     } catch {
       setError("Impossible de contacter le serveur. Vérifiez votre connexion.");
-      setResult(null);
+      setPreview(null);
     } finally {
       setLoading(false);
     }
@@ -73,7 +152,10 @@ export function RadiographieTool({
   const reset = () => {
     setInput(EMPTY);
     setResult(null);
+    setIsDemo(false);
+    setStale(false);
     setError(null);
+    setPreview(null);
   };
 
   return (
@@ -82,7 +164,7 @@ export function RadiographieTool({
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <PatrimoineForm
           value={input}
-          onChange={setInput}
+          onChange={updateInput}
           onSubmit={runAnalysis}
           onReset={reset}
           loading={loading}
@@ -109,34 +191,53 @@ export function RadiographieTool({
           </div>
         )}
 
-        {loading && !result && (
-          <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
-            <div className="mx-auto mb-3 h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-accent" />
-            Lecture pédagogique en cours de génération…
-          </div>
-        )}
+        {/* Génération en cours : aperçu progressif dès les premiers mots. */}
+        {loading &&
+          (preview ? (
+            <AnalysisResult analysis={preview} streaming />
+          ) : (
+            <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
+              <div className="mx-auto mb-3 h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-accent" />
+              Connexion au modèle…
+            </div>
+          ))}
 
-        {result && (
+        {!loading && result && (
           <div className="space-y-4">
-            <AnalysisResult analysis={result.analysis} />
-            {isAuthenticated ? (
-              <SaveAnalysisButton
-                input={input}
-                metrics={result.metrics}
-                analysis={result.analysis}
-              />
-            ) : (
-              <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
-                Mode invité : cette radiographie n'est pas enregistrée.{" "}
-                <a
-                  href="/login"
-                  className="font-medium text-accent hover:underline"
-                >
-                  Connectez-vous
-                </a>{" "}
-                pour conserver votre historique et comparer dans le temps.
+            {isDemo && (
+              <p className="rounded-xl border border-accent/30 bg-accent/5 p-4 text-sm text-slate-600">
+                <span className="font-semibold text-accent">Exemple.</span>{" "}
+                Radiographie pré-calculée d'un profil patrimonial français
+                typique. Ajustez les montants à votre situation puis relancez
+                pour obtenir votre propre lecture.
               </p>
             )}
+            {stale && (
+              <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                Les chiffres ont changé depuis cette analyse. Cliquez sur «
+                Lancer la radiographie » pour la mettre à jour.
+              </p>
+            )}
+            <AnalysisResult analysis={result.analysis} />
+            {!isDemo &&
+              (isAuthenticated ? (
+                <SaveAnalysisButton
+                  input={input}
+                  metrics={result.metrics}
+                  analysis={result.analysis}
+                />
+              ) : (
+                <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                  Mode invité : cette radiographie n'est pas enregistrée.{" "}
+                  <a
+                    href="/login"
+                    className="font-medium text-accent hover:underline"
+                  >
+                    Connectez-vous
+                  </a>{" "}
+                  pour conserver votre historique et comparer dans le temps.
+                </p>
+              ))}
           </div>
         )}
 

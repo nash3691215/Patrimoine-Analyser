@@ -1,0 +1,38 @@
+{
+  "synthese": "Avec 450 000 € de patrimoine brut, cette situation est globalement solide : le coussin de liquidité est confortable et l'horizon long terme est cohérent avec la présence d'actifs de croissance. La fragilité principale est structurelle : près de 78 % du patrimoine repose sur de l'immobilier, dont plus de la moitié sur la seule résidence principale, un actif non générateur de revenus et très peu liquide. Le patrimoine manque de souplesse face aux imprévus ou aux opportunités.",
+  "forces": [
+    "Coussin de liquidité à 13,6 mois : bien au-delà du seuil minimal de 3 à 6 mois, ce matelas protège efficacement contre les coups durs sans avoir à liquider un actif en urgence.",
+    "Horizon long terme déclaré : plus de 10 ans, c'est le carburant des stratégies de croissance — le temps permet d'absorber la volatilité et de laisser les intérêts composer.",
+    "Présence d'actifs de croissance : les 45 000 € en actions/ETF constituent un premier ancrage sur les marchés financiers, cohérent avec un horizon long.",
+    "Patrimoine total significatif à 450 000 € : une base solide qui offre des marges de manœuvre réelles pour rééquilibrer progressivement."
+  ],
+  "vigilances": [
+    {
+      "titre": "Concentration excessive sur la résidence principale",
+      "principe": "Un actif qui dépasse 50 % d'un patrimoine en devient le pilote unique : si sa valeur baisse, c'est l'ensemble du patrimoine qui recule. Or la résidence principale a une particularité supplémentaire : elle ne produit aucun revenu et ne peut pas être vendue partiellement. Toute la valeur est bloquée dans un usage quotidien.",
+      "detail": "Ici, la résidence principale représente 53,3 % du patrimoine brut, soit 240 000 €. Une correction immobilière locale de 20 % effacerait 48 000 € de patrimoine net — l'équivalent de toute la poche actions/ETF — sans possibilité d'ajustement rapide."
+    },
+    {
+      "titre": "Sur-pondération immobilière globale",
+      "principe": "L'immobilier est un actif peu liquide (une vente prend des mois), géographiquement concentré (un ou deux marchés locaux), et souvent financé à crédit (l'effet de levier amplifie les gains comme les pertes). Un patrimoine très majoritairement immobilier est robuste en apparence, mais rigide en pratique.",
+      "detail": "77,8 % du patrimoine est immobilier. Cela signifie que la quasi-totalité de la valeur accumulée dépend de la tenue de deux marchés locaux spécifiques, avec une capacité de réallocation quasi nulle à court terme."
+    },
+    {
+      "titre": "Sous-exposition aux actifs de croissance pour un horizon long terme",
+      "principe": "Sur un horizon supérieur à 10 ans, le temps est l'allié principal de l'investisseur : il permet d'absorber les baisses temporaires et de bénéficier des effets de composition. Un patrimoine très sécurisé sur le long terme renonce à ce moteur, et laisse dormir un capital qui aurait pu travailler.",
+      "detail": "Avec 12,7 % en actifs volatils (actions + crypto) pour un horizon de plus de 10 ans, la part de croissance reste modeste. L'essentiel du patrimoine financier est immobilisé dans des actifs peu dynamiques ou des biens physiques non cessibles à la demande."
+    },
+    {
+      "titre": "Liquidités dormantes au-delà du nécessaire",
+      "principe": "Un coussin de liquidité est indispensable — mais au-delà de 6 mois de dépenses, chaque euro supplémentaire en livret ou en cash a un coût d'opportunité : il ne participe pas à la création de valeur long terme. Trop de sécurité est aussi une forme de risque, celui de l'érosion par l'inflation.",
+      "detail": "Le coussin couvre 13,6 mois de dépenses. Si 6 mois suffisent comme filet de sécurité, environ 7 mois de dépenses supplémentaires sont actuellement dans une posture défensive qui pourrait, sur un horizon long, être partiellement repositionnée."
+    }
+  ],
+  "pistes": [
+    "Réfléchir au rôle de la résidence principale dans le patrimoine global : est-elle un actif ou un usage ? Comprendre cette distinction aide à mieux évaluer la concentration réelle et à décider si d'autres actifs méritent d'être développés en parallèle.",
+    "Se questionner sur le niveau de coussin 'utile' : 6 mois couverts en sécurité absolue, quelle destination pour les 7 mois supplémentaires ? Livret, fonds euros, ou mise progressive au travail sur l'horizon long — chaque option a une logique différente à explorer.",
+    "Explorer la diversification progressive des actifs financiers : sur un horizon long, comprendre le fonctionnement des ETF indiciels (diversification automatique, coûts bas) peut être un point de départ pédagogique utile pour réduire la dépendance à l'immobilier.",
+    "Évaluer la part crypto à l'aune de la tolérance au risque réelle : 2,7 % reste une exposition mesurée, mais la volatilité de cette classe d'actifs est sans commune mesure avec le reste du portefeuille — vaut-il la peine de clarifier la conviction et l'horizon sur ce segment spécifique ?"
+  ],
+  "score_robustesse": 58
+}
