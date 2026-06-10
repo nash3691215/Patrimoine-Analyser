@@ -4,6 +4,10 @@ import Link from "next/link";
 export function SiteHeader({ userEmail }: { userEmail: string | null }) {
   return (
     <header className="border-b border-slate-200 bg-white">
+      <div className="border-b border-amber-200 bg-amber-50 px-4 py-1.5 text-center text-xs font-medium text-amber-900">
+        Version bêta de démonstration — destinée à l'évaluation par un
+        recruteur, données fictives.
+      </div>
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
         <Link href="/" className="group flex items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-sm font-bold text-white">
