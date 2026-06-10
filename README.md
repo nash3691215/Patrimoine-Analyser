@@ -1,11 +1,11 @@
 <div align="center">
 
-<img src="docs/banniere.png" alt="Radiographie de patrimoine — score de robustesse et repères pédagogiques" width="820" />
-
 # Radiographie de patrimoine
 
 **Outil pédagogique d'allocation patrimoniale.**<br/>
 Vos chiffres sont calculés en code — l'IA explique, elle ne calcule jamais.
+
+Conçu, développé, testé et déployé par **Noureddine Akouh** · [noureddine.akouh@gmail.com](mailto:noureddine.akouh@gmail.com)
 
 <a href="https://patrimoine-analyzer-demo.vercel.app"><img src="https://img.shields.io/badge/▶_Démo_en_ligne-patrimoine--analyzer--demo.vercel.app-2563eb?style=for-the-badge" alt="Démo en ligne" /></a>
 
@@ -19,6 +19,8 @@ Vos chiffres sont calculés en code — l'IA explique, elle ne calcule jamais.
 
 <i>Analyse complète visible à l'ouverture — sans compte, sans saisie, en moins d'une seconde.</i>
 
+<img src="docs/screenshot-outil.png" alt="L'outil : saisie de l'allocation, donut, métriques objectives et repères pédagogiques recalculés à chaque frappe" width="860" />
+
 </div>
 
 ---
@@ -31,8 +33,26 @@ investissement réglementé.
 
 ---
 
+## Ce que ce projet démontre
+
+- **Une frontière déterministe / IA assumée** : tous les calculs financiers
+  vivent dans du code testé ([`lib/metrics.ts`](lib/metrics.ts)) ; le LLM ne
+  reçoit que des chiffres déjà calculés et n'en produit jamais. Zéro
+  hallucination possible sur les montants.
+- **Une intégration LLM de production** : streaming NDJSON avec réparation de
+  JSON tronqué pour l'affichage progressif, sortie sous contrat Zod, retry
+  unique, erreurs propres — pas un simple appel d'API.
+- **La maîtrise des coûts dès la conception** : analyse de démo pré-calculée
+  (zéro appel par visiteur), rate-limiting par IP, bornes d'input.
+- **Les pratiques d'équipe** : 26 tests unitaires sur la couche critique, CI
+  GitHub Actions (lint, types, tests, build), commits conventionnels, README
+  reproductible.
+
+---
+
 ## Sommaire
 
+- [Ce que ce projet démontre](#ce-que-ce-projet-démontre)
 - [Architecture](#architecture)
 - [Trois invariants d'architecture](#trois-invariants-darchitecture)
 - [Expérience : zéro attente](#expérience--zéro-attente)
@@ -121,6 +141,10 @@ une connexion.
   (`assessMetrics`) — coussin ≥ 3 mois, concentration ≤ 50 %, immobilier
   ≤ 60 %, volatilité selon l'horizon. Les verdicts et le compteur « x/4 au
   vert » réagissent à chaque frappe, sans IA.
+
+<div align="center">
+<img src="docs/screenshot-analyse.png" alt="L'analyse générée : synthèse, score de robustesse animé, forces et pistes de réflexion" width="860" />
+</div>
 
 ---
 
