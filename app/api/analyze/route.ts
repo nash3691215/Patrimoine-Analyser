@@ -5,14 +5,20 @@
  *  1. valide la saisie entrante (Zod) ;
  *  2. calcule les métriques EN CODE (frontière déterministe) ;
  *  3. envoie uniquement ces métriques au modèle, qui interprète ;
- *  4. renvoie { metrics, analysis } validés.
+ *  4. STREAME la réponse en NDJSON (une ligne JSON par événement) :
+ *       {"type":"metrics","metrics":{…}}   — immédiat
+ *       {"type":"delta","text":"…"}        — fragments au fil de l'eau
+ *       {"type":"done","analysis":{…}}     — l'objet final VALIDÉ (seul à faire foi)
+ *       {"type":"error","error":"…"}       — échec propre après retry
  *
- * La clé ANTHROPIC_API_KEY et le prompt système ne quittent jamais le serveur.
+ * Les erreurs de saisie (avant tout appel modèle) restent des réponses JSON
+ * classiques avec code HTTP. La clé ANTHROPIC_API_KEY et le prompt système ne
+ * quittent jamais le serveur.
  */
 
 import { NextResponse } from "next/server";
 
-import { runAnalysis, AnalysisError } from "@/lib/analyze";
+import { runAnalysisStream, AnalysisError } from "@/lib/analyze";
 import { computeMetrics } from "@/lib/metrics";
 import { analyzeRequestSchema } from "@/lib/schema";
 
@@ -54,22 +60,42 @@ export async function POST(request: Request) {
     );
   }
 
-  try {
-    const analysis = await runAnalysis(metrics);
-    return NextResponse.json({ metrics, analysis });
-  } catch (error) {
-    if (error instanceof AnalysisError) {
-      // Erreur maîtrisée (clé absente, sortie non conforme après retry).
-      console.error("[analyze] échec d'analyse :", error.message);
-      return NextResponse.json(
-        { error: "L'analyse n'a pas pu être générée. Réessayez dans un instant." },
-        { status: 502 },
-      );
-    }
-    console.error("[analyze] erreur inattendue :", error);
-    return NextResponse.json(
-      { error: "Erreur serveur inattendue." },
-      { status: 500 },
-    );
-  }
+  // 4. Réponse streamée. Le statut HTTP est figé à l'ouverture du flux : les
+  // échecs du modèle sont signalés par un événement {"type":"error"}.
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      const send = (event: Record<string, unknown>) =>
+        controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+
+      send({ type: "metrics", metrics });
+      try {
+        const analysis = await runAnalysisStream(metrics, (text) =>
+          send({ type: "delta", text }),
+        );
+        send({ type: "done", analysis });
+      } catch (error) {
+        if (error instanceof AnalysisError) {
+          // Erreur maîtrisée (clé absente, sortie non conforme après retry).
+          console.error("[analyze] échec d'analyse :", error.message);
+          send({
+            type: "error",
+            error: "L'analyse n'a pas pu être générée. Réessayez dans un instant.",
+          });
+        } else {
+          console.error("[analyze] erreur inattendue :", error);
+          send({ type: "error", error: "Erreur serveur inattendue." });
+        }
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "application/x-ndjson; charset=utf-8",
+      "Cache-Control": "no-store",
+    },
+  });
 }
