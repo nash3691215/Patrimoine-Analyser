@@ -9,12 +9,13 @@ Vos chiffres sont calculés en code — l'IA explique, elle ne calcule jamais.
 
 <a href="https://patrimoine-analyzer-demo.vercel.app"><img src="https://img.shields.io/badge/▶_Démo_en_ligne-patrimoine--analyzer--demo.vercel.app-2563eb?style=for-the-badge" alt="Démo en ligne" /></a>
 
-[![CI](https://github.com/nash3691215/S-INVESTIR-DEMO/actions/workflows/ci.yml/badge.svg)](https://github.com/nash3691215/S-INVESTIR-DEMO/actions/workflows/ci.yml)
+[![CI](https://github.com/nash3691215/Patrimoine-Analyser/actions/workflows/ci.yml/badge.svg)](https://github.com/nash3691215/Patrimoine-Analyser/actions/workflows/ci.yml)
 ![Next.js 14](https://img.shields.io/badge/Next.js-14-000000?logo=nextdotjs&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-Postgres_+_RLS-3FCF8E?logo=supabase&logoColor=white)
 ![Claude](https://img.shields.io/badge/Claude-Sonnet_·_streaming-D97757?logo=anthropic&logoColor=white)
 ![Vitest](https://img.shields.io/badge/Vitest-26_tests-6E9F18?logo=vitest&logoColor=white)
+![License: MIT](https://img.shields.io/badge/Licence-MIT-lightgrey)
 
 <i>Analyse complète visible à l'ouverture — sans compte, sans saisie, en moins d'une seconde.</i>
 

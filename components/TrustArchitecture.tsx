@@ -5,7 +5,7 @@
  */
 
 const REPO_METRICS_URL =
-  "https://github.com/nash3691215/S-INVESTIR-DEMO/blob/main/lib/metrics.ts";
+  "https://github.com/nash3691215/Patrimoine-Analyser/blob/main/lib/metrics.ts";
 
 const STEPS = [
   {
