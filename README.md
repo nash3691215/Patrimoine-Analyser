@@ -1,19 +1,32 @@
+<div align="center">
+
+<img src="docs/banniere.png" alt="Radiographie de patrimoine — score de robustesse et repères pédagogiques" width="820" />
+
 # Radiographie de patrimoine
 
+**Outil pédagogique d'allocation patrimoniale.**<br/>
+Vos chiffres sont calculés en code — l'IA explique, elle ne calcule jamais.
+
+<a href="https://s-investir-demo.vercel.app"><img src="https://img.shields.io/badge/▶_Démo_en_ligne-s--investir--demo.vercel.app-2563eb?style=for-the-badge" alt="Démo en ligne" /></a>
+
 [![CI](https://github.com/nash3691215/S-INVESTIR-DEMO/actions/workflows/ci.yml/badge.svg)](https://github.com/nash3691215/S-INVESTIR-DEMO/actions/workflows/ci.yml)
-**[→ Démo en ligne](https://s-investir-demo.vercel.app)** — analyse complète
-visible à l'ouverture, sans compte ni saisie.
+![Next.js 14](https://img.shields.io/badge/Next.js-14-000000?logo=nextdotjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-Postgres_+_RLS-3FCF8E?logo=supabase&logoColor=white)
+![Claude](https://img.shields.io/badge/Claude-Sonnet_·_streaming-D97757?logo=anthropic&logoColor=white)
+![Vitest](https://img.shields.io/badge/Vitest-26_tests-6E9F18?logo=vitest&logoColor=white)
 
-![Radiographie de patrimoine](docs/banniere.png)
+<i>Analyse complète visible à l'ouverture — sans compte, sans saisie, en moins d'une seconde.</i>
 
-Outil pédagogique de **radiographie d'allocation patrimoniale**. L'utilisateur
-saisit la répartition de son patrimoine ; l'application calcule des métriques
-objectives, puis en génère une **lecture pédagogique structurée** via l'API
-Claude. L'angle est éducatif — comprendre ses angles morts — et non du conseil
-en investissement réglementé.
+</div>
 
-**Stack** : Next.js 14 (App Router) · TypeScript · Supabase (Postgres + Auth) ·
-API Claude (serveur, streaming) · Recharts · Zod · Vitest · déploiement Vercel.
+---
+
+L'utilisateur saisit la répartition de son patrimoine ; l'application calcule
+des **métriques objectives** (code déterministe, testé), puis en génère une
+**lecture pédagogique structurée** via l'API Claude, streamée à l'écran.
+L'angle est éducatif — comprendre ses angles morts — et non du conseil en
+investissement réglementé.
 
 ---
 
@@ -271,6 +284,9 @@ C'est tout : la table, le RLS et l'auth sont prêts.
 
 ## Structure du projet
 
+<details>
+<summary><b>Déplier l'arborescence commentée</b></summary>
+
 ```
 app/
   api/analyze/route.ts      # SEUL appel à Claude : rate-limit → valide → calcule → streame
@@ -304,6 +320,8 @@ supabase/
   schema.sql                # SQL table + RLS (copier-coller)
 .github/workflows/ci.yml    # lint + types + tests + build
 ```
+
+</details>
 
 ---
 
