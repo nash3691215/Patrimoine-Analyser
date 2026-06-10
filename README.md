@@ -1,5 +1,11 @@
 # Radiographie de patrimoine
 
+[![CI](https://github.com/nash3691215/S-INVESTIR-DEMO/actions/workflows/ci.yml/badge.svg)](https://github.com/nash3691215/S-INVESTIR-DEMO/actions/workflows/ci.yml)
+**[→ Démo en ligne](https://s-investir-demo.vercel.app)** — analyse complète
+visible à l'ouverture, sans compte ni saisie.
+
+![Radiographie de patrimoine](docs/banniere.png)
+
 Outil pédagogique de **radiographie d'allocation patrimoniale**. L'utilisateur
 saisit la répartition de son patrimoine ; l'application calcule des métriques
 objectives, puis en génère une **lecture pédagogique structurée** via l'API
@@ -7,18 +13,54 @@ Claude. L'angle est éducatif — comprendre ses angles morts — et non du cons
 en investissement réglementé.
 
 **Stack** : Next.js 14 (App Router) · TypeScript · Supabase (Postgres + Auth) ·
-API Claude (serveur) · Recharts · Zod · déploiement Vercel.
+API Claude (serveur, streaming) · Recharts · Zod · Vitest · déploiement Vercel.
 
 ---
 
 ## Sommaire
 
+- [Architecture](#architecture)
 - [Trois invariants d'architecture](#trois-invariants-darchitecture)
+- [Expérience : zéro attente](#expérience--zéro-attente)
+- [Garde-fous & coûts](#garde-fous--coûts)
 - [Installation locale](#installation-locale)
+- [Tests](#tests)
 - [Variables d'environnement](#variables-denvironnement)
 - [Configuration Supabase (copier-coller)](#configuration-supabase-copier-coller)
 - [Déploiement sur Vercel](#déploiement-sur-vercel)
 - [Structure du projet](#structure-du-projet)
+
+---
+
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph Client["Navigateur (client)"]
+        F["Formulaire<br/>allocation + dépenses + horizon"]
+        V["Donut + cartes de métriques<br/>+ repères pédagogiques<br/><i>recalculés à chaque frappe</i>"]
+        R["Analyse structurée<br/>affichée au fil du stream"]
+    end
+
+    subgraph Server["Next.js — serveur uniquement"]
+        RL["Rate-limit 5/min/IP<br/>+ validation Zod de la saisie"]
+        M["lib/metrics.ts<br/><b>FRONTIÈRE DÉTERMINISTE</b><br/>part liquide · concentration ·<br/>poids immo · coussin"]
+        A["lib/analyze.ts<br/>appel Claude (streaming)<br/>prompt server-only"]
+        Z["Validation Zod de la sortie<br/>retry ×1 sinon erreur propre"]
+    end
+
+    C["API Claude<br/>(interprète, ne calcule jamais)"]
+    S[("Supabase<br/>analyses + RLS")]
+
+    F -->|"POST /api/analyze"| RL --> M --> A <--> C
+    A -->|"deltas NDJSON"| R
+    A --> Z -->|"objet final validé<br/>(seul à faire foi)"| R
+    F -.->|"calcul local instantané"| V
+    R -.->|"sauvegarde (si connecté)"| S
+```
+
+Le client calcule les mêmes métriques en local pour l'aperçu instantané ; le
+serveur **recalcule tout** et ne fait jamais confiance à la saisie.
 
 ---
 
@@ -40,13 +82,48 @@ API Claude (serveur) · Recharts · Zod · déploiement Vercel.
 3. **Sortie JSON validée.** Claude répond en JSON strict, validé par Zod
    ([`lib/schema.ts`](lib/schema.ts)) :
    `{ synthese, forces[], vigilances[{titre, principe, detail}], pistes[], score_robustesse }`.
-   En cas d'échec de parse/validation, **un retry**, puis une erreur `502`
-   propre.
+   La réponse est **streamée** pour l'affichage progressif, mais seul l'objet
+   final validé fait foi ; en cas d'échec de parse/validation, **un retry**
+   non-streamé, puis une erreur propre.
 
 **Mode invité** : l'application est pré-remplie avec un profil de démonstration
 réaliste (≈ 78 % d'immobilier, peu de liquide). On peut lancer une analyse
 complète **sans créer de compte** — seule la sauvegarde dans l'historique exige
 une connexion.
+
+---
+
+## Expérience : zéro attente
+
+- **À l'ouverture** : une radiographie complète du profil de démo s'affiche
+  en < 1 s. Elle a été générée une fois par le vrai pipeline puis figée dans
+  [`lib/demo-analysis.json`](lib/demo-analysis.json) — aucun appel API par
+  visiteur, aucun contenu inventé à la main.
+- **Sur saisie personnalisée** : la réponse du modèle est streamée en NDJSON
+  (`metrics` → `delta`… → `done`). Le client répare le JSON tronqué au fil de
+  l'eau ([`lib/partial-json.ts`](lib/partial-json.ts)) : le texte apparaît en
+  ~1 s et l'analyse se construit sous les yeux.
+- **Pendant la saisie** : la grille pédagogique est aussi appliquée en code
+  (`assessMetrics`) — coussin ≥ 3 mois, concentration ≤ 50 %, immobilier
+  ≤ 60 %, volatilité selon l'horizon. Les verdicts et le compteur « x/4 au
+  vert » réagissent à chaque frappe, sans IA.
+
+---
+
+## Garde-fous & coûts
+
+Chaque requête admise déclenche un appel modèle payant (~1 centime). D'où :
+
+| Garde-fou | Implémentation |
+| --- | --- |
+| Rate-limiting | 5 requêtes/min/IP, fenêtre glissante, `429` + `Retry-After` ([`lib/rate-limit.ts`](lib/rate-limit.ts)) |
+| Bornes d'input | Montants plafonnés dans le schéma Zod (1 Md€/classe), revalidés côté serveur |
+| Analyse de démo figée | Le trafic de consultation ne coûte **rien** : seul un profil modifié déclenche le modèle |
+| Sortie sous contrat | JSON strict validé, retry unique, erreur propre — jamais de sortie brute affichée |
+
+Limite assumée : le compteur de rate-limit est en mémoire, donc **par instance
+serverless** (documenté dans le code ; un durcissement réel passerait par un
+compteur partagé type Upstash/KV).
 
 ---
 
@@ -69,16 +146,40 @@ npm run dev
 L'application est disponible sur http://localhost:3000.
 
 > **Sans configuration** : tant que `ANTHROPIC_API_KEY` n'est pas renseignée,
-> l'aperçu des métriques et le donut fonctionnent (calcul déterministe local),
-> mais le bouton « Lancer la radiographie » renverra une erreur 502. Sans
-> Supabase, l'outil reste pleinement utilisable en **mode invité**.
+> l'analyse de démo, l'aperçu des métriques et les repères fonctionnent
+> (calcul déterministe local) ; relancer une radiographie affichera une erreur
+> propre. Sans Supabase, l'outil reste pleinement utilisable en **mode
+> invité**.
 
 Vérifier la production avant déploiement :
 
 ```bash
 npm run build      # doit passer sans erreur ni warning
 npm run typecheck  # vérification de types stricte
+npm run lint       # ESLint (next/core-web-vitals)
 ```
+
+---
+
+## Tests
+
+```bash
+npm test           # Vitest, ~100 ms
+```
+
+La stratégie : **tester ce qui doit l'être** — la couche déterministe, pas le
+LLM. 30+ tests couvrent :
+
+- `computeMetrics` : cas de référence du profil de démo, arrondis, montants
+  invalides, patrimoine vide ;
+- `assessMetrics` : bornes exactes des repères (50 % pile, 60 % pile, 3 mois
+  pile) et les quatre verdicts ;
+- `parsePartialAnalysis` : aucune exception quel que soit le point de
+  troncature du stream, aperçus monotones, échappements, clés orphelines ;
+- `checkRateLimit` : rafale, fenêtre glissante, indépendance des IP.
+
+La CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) rejoue
+lint + types + tests + build à chaque push.
 
 ---
 
@@ -172,30 +273,36 @@ C'est tout : la table, le RLS et l'auth sont prêts.
 
 ```
 app/
-  api/analyze/route.ts      # SEUL appel à Claude (serveur) : valide → calcule → interprète
+  api/analyze/route.ts      # SEUL appel à Claude : rate-limit → valide → calcule → streame
+  api/og/route.tsx          # image Open Graph générée (next/og)
   auth/callback/route.ts    # échange du code magic link contre une session
   auth/signout/route.ts     # déconnexion
   history/page.tsx          # historique de l'utilisateur (lecture RLS)
   login/page.tsx            # connexion par magic link
   page.tsx                  # page principale (outil + mode invité)
 components/
-  RadiographieTool.tsx      # orchestrateur client (saisie → analyse → résultat)
+  RadiographieTool.tsx      # orchestrateur client (saisie → stream → résultat)
   PatrimoineForm.tsx        # formulaire par classe d'actifs
   AllocationDonut.tsx       # donut Recharts
-  MetricsCards.tsx          # cartes de métriques
-  AnalysisResult.tsx        # rendu de l'analyse structurée
-  ScoreBadge.tsx            # score de robustesse /100 (code couleur)
+  MetricsCards.tsx          # cartes de métriques + verdicts des repères
+  AnalysisResult.tsx        # rendu de l'analyse (complète ou en cours de stream)
+  ScoreBadge.tsx            # score de robustesse /100 (code couleur, animé)
+  TrustArchitecture.tsx     # bloc « Pourquoi cette analyse est fiable »
   Disclaimer.tsx            # avertissement réglementaire permanent
 lib/
-  metrics.ts                # FRONTIÈRE DÉTERMINISTE : tous les calculs
+  metrics.ts                # FRONTIÈRE DÉTERMINISTE : calculs + repères (testés)
   prompt.ts                 # grille d'analyse (server-only)
-  analyze.ts                # appel Claude + validation Zod + retry
-  schema.ts                 # contrats Zod (entrée + sortie IA)
+  analyze.ts                # appel Claude streamé + validation Zod + retry
+  schema.ts                 # contrats Zod (entrée bornée + sortie IA)
+  partial-json.ts           # réparation du JSON streamé pour l'aperçu (testé)
+  rate-limit.ts             # fenêtre glissante par IP (testé)
+  demo-analysis.json        # radiographie du profil de démo, figée
   types.ts                  # classes d'actifs, types partagés
   seed.ts                   # profil de démo pré-rempli
   supabase/                 # clients client / serveur / middleware
 supabase/
   schema.sql                # SQL table + RLS (copier-coller)
+.github/workflows/ci.yml    # lint + types + tests + build
 ```
 
 ---
