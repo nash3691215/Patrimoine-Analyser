@@ -24,7 +24,11 @@ jobs:
           cache: npm
 
       - name: Installer les dépendances
-        run: npm ci
+        run: |
+          npm ci 2>&1 | tee /tmp/npmci.log || {
+            echo "::error::npm ci a échoué — $(tail -c 600 /tmp/npmci.log | tr '\n' ' ')"
+            exit 1
+          }
 
       - name: Lint
         run: npm run lint
