@@ -9,6 +9,7 @@
 import {
   ASSET_CLASSES,
   type AssetClassId,
+  type Horizon,
   type Metrics,
   type PatrimoineInput,
 } from "./types";
@@ -98,4 +99,99 @@ export function computeMetrics(input: PatrimoineInput): Metrics {
     horizon,
     partVolatilePct: total > 0 ? round1((montantVolatil / total) * 100) : 0,
   };
+}
+
+/* ------------------------------------------------------------------------- *
+ * Repères pédagogiques — la même grille que celle enseignée par l'analyse,
+ * appliquée en code. Ils réagissent en direct à la saisie ; l'IA n'intervient
+ * pas dans leur évaluation (elle en propose ensuite une lecture).
+ * ------------------------------------------------------------------------- */
+
+/** Seuil bas du coussin de liquidité (repère : 3 à 6 mois de dépenses). */
+export const COUSSIN_MIN_MOIS = 3;
+/** Au-delà de ce poids, une classe d'actifs devient un facteur de fragilité. */
+export const CONCENTRATION_MAX_PCT = 50;
+/** Au-delà, sur-pondération immobilière (biais français fréquent). */
+export const IMMO_MAX_PCT = 60;
+/** Part volatile (actions/ETF + crypto) jugée cohérente selon l'horizon. */
+export const VOLATILITE_MAX_PCT: Record<Horizon, number> = {
+  court: 25,
+  moyen: 50,
+  long: 80,
+};
+
+export interface RepereStatus {
+  id: "coussin" | "concentration" | "immobilier" | "horizon_risque";
+  /** true = dans le repère, false = hors repère, null = non évaluable. */
+  ok: boolean | null;
+  /** Lecture courte du verdict, affichable telle quelle. */
+  message: string;
+}
+
+/** Applique les repères pédagogiques aux métriques. Déterministe et testable. */
+export function assessMetrics(metrics: Metrics): RepereStatus[] {
+  const vide = metrics.total <= 0;
+
+  const coussin: RepereStatus = vide || metrics.coussinMois === null
+    ? {
+        id: "coussin",
+        ok: null,
+        message: "Renseignez vos dépenses mensuelles pour l'évaluer.",
+      }
+    : metrics.coussinMois >= COUSSIN_MIN_MOIS
+      ? {
+          id: "coussin",
+          ok: true,
+          message: `${metrics.coussinMois} mois couverts (repère : ${COUSSIN_MIN_MOIS} à 6 mois).`,
+        }
+      : {
+          id: "coussin",
+          ok: false,
+          message: `${metrics.coussinMois} mois couverts — sous le repère de ${COUSSIN_MIN_MOIS} mois.`,
+        };
+
+  const concentration: RepereStatus = vide
+    ? { id: "concentration", ok: null, message: "—" }
+    : metrics.concentration.pct <= CONCENTRATION_MAX_PCT
+      ? {
+          id: "concentration",
+          ok: true,
+          message: `Aucune classe ne dépasse ${CONCENTRATION_MAX_PCT} % du patrimoine.`,
+        }
+      : {
+          id: "concentration",
+          ok: false,
+          message: `${metrics.concentration.label} porte ${metrics.concentration.pct} % — facteur de fragilité au-delà de ${CONCENTRATION_MAX_PCT} %.`,
+        };
+
+  const immobilier: RepereStatus = vide
+    ? { id: "immobilier", ok: null, message: "—" }
+    : metrics.poidsImmoPct <= IMMO_MAX_PCT
+      ? {
+          id: "immobilier",
+          ok: true,
+          message: `${metrics.poidsImmoPct} % du patrimoine (repère : ≤ ${IMMO_MAX_PCT} %).`,
+        }
+      : {
+          id: "immobilier",
+          ok: false,
+          message: `${metrics.poidsImmoPct} % — sur-pondération au-delà de ${IMMO_MAX_PCT} % (illiquidité, concentration géographique).`,
+        };
+
+  const seuilVolatil = VOLATILITE_MAX_PCT[metrics.horizon];
+  const horizonRisque: RepereStatus = vide
+    ? { id: "horizon_risque", ok: null, message: "—" }
+    : metrics.partVolatilePct <= seuilVolatil
+      ? {
+          id: "horizon_risque",
+          ok: true,
+          message: `${metrics.partVolatilePct} % d'actifs volatils, cohérent avec un horizon ${metrics.horizon} (repère : ≤ ${seuilVolatil} %).`,
+        }
+      : {
+          id: "horizon_risque",
+          ok: false,
+          message: `${metrics.partVolatilePct} % d'actifs volatils pour un horizon ${metrics.horizon} — tension au-delà de ${seuilVolatil} %.`,
+        };
+
+  return [coussin, concentration, immobilier, horizonRisque];
 }

@@ -7,7 +7,7 @@ import { AnalysisResult } from "./AnalysisResult";
 import { MetricsCards } from "./MetricsCards";
 import { PatrimoineForm } from "./PatrimoineForm";
 import { SaveAnalysisButton } from "./SaveAnalysisButton";
-import { computeMetrics } from "@/lib/metrics";
+import { assessMetrics, computeMetrics } from "@/lib/metrics";
 import { parsePartialAnalysis, type PartialAnalysis } from "@/lib/partial-json";
 import { SEED_PATRIMOINE } from "@/lib/seed";
 import DEMO_ANALYSIS from "@/lib/demo-analysis.json";
@@ -63,6 +63,10 @@ export function RadiographieTool({
   // Aperçu des métriques en direct (calcul déterministe, côté client),
   // avant même de solliciter l'IA.
   const livePreview = computeMetrics(input);
+  // Verdicts de la grille pédagogique, recalculés à chaque frappe (sans IA).
+  const reperes = assessMetrics(livePreview);
+  const reperesEvaluables = reperes.filter((r) => r.ok !== null);
+  const reperesAuVert = reperesEvaluables.filter((r) => r.ok).length;
 
   const updateInput = (next: PatrimoineInput) => {
     setInput(next);
@@ -174,9 +178,28 @@ export function RadiographieTool({
       {/* Colonne visualisation + analyse */}
       <div className="space-y-6">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-            Allocation
-          </h2>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+              Allocation
+            </h2>
+            {reperesEvaluables.length > 0 && (
+              <span
+                className={`rounded-full border px-3 py-1 text-xs font-semibold tabular-nums transition-colors ${
+                  reperesAuVert === reperesEvaluables.length
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                    : "border-amber-200 bg-amber-50 text-amber-700"
+                }`}
+                title="Coussin de liquidité, concentration, poids immobilier, adéquation horizon/risque — évalués en code, en direct."
+              >
+                Repères objectifs : {reperesAuVert}/{reperesEvaluables.length} au
+                vert
+              </span>
+            )}
+          </div>
+          <p className="mt-1 text-xs text-slate-400">
+            Calculé en code à chaque modification — l'IA n'intervient pas ici.
+            Modifiez un montant pour voir les repères réagir.
+          </p>
           <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_1fr]">
             <AllocationDonut metrics={livePreview} />
             <div className="self-center">
