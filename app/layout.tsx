@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://s-investir-demo.vercel.app";
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://patrimoine-analyzer-demo.vercel.app";
 
 const TITLE = "Radiographie de patrimoine — outil pédagogique";
 const DESCRIPTION =

@@ -7,7 +7,7 @@
 **Outil pédagogique d'allocation patrimoniale.**<br/>
 Vos chiffres sont calculés en code — l'IA explique, elle ne calcule jamais.
 
-<a href="https://s-investir-demo.vercel.app"><img src="https://img.shields.io/badge/▶_Démo_en_ligne-s--investir--demo.vercel.app-2563eb?style=for-the-badge" alt="Démo en ligne" /></a>
+<a href="https://patrimoine-analyzer-demo.vercel.app"><img src="https://img.shields.io/badge/▶_Démo_en_ligne-patrimoine--analyzer--demo.vercel.app-2563eb?style=for-the-badge" alt="Démo en ligne" /></a>
 
 [![CI](https://github.com/nash3691215/S-INVESTIR-DEMO/actions/workflows/ci.yml/badge.svg)](https://github.com/nash3691215/S-INVESTIR-DEMO/actions/workflows/ci.yml)
 ![Next.js 14](https://img.shields.io/badge/Next.js-14-000000?logo=nextdotjs&logoColor=white)
