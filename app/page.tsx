@@ -1,6 +1,7 @@
 import { RadiographieTool } from "@/components/RadiographieTool";
 import { Disclaimer } from "@/components/Disclaimer";
 import { SiteHeader } from "@/components/SiteHeader";
+import { TrustArchitecture } from "@/components/TrustArchitecture";
 import { getOptionalUser } from "@/lib/auth";
 
 // Page dynamique : l'état de connexion dépend des cookies de la requête.
@@ -30,6 +31,10 @@ export default async function HomePage() {
 
           <div className="mt-8">
             <RadiographieTool isAuthenticated={Boolean(user)} />
+          </div>
+
+          <div className="mt-10">
+            <TrustArchitecture />
           </div>
         </section>
       </main>
