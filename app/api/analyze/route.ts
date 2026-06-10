@@ -20,6 +20,7 @@ import { NextResponse } from "next/server";
 
 import { runAnalysisStream, AnalysisError } from "@/lib/analyze";
 import { computeMetrics } from "@/lib/metrics";
+import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { analyzeRequestSchema } from "@/lib/schema";
 
 // Exécution Node (le SDK Anthropic n'est pas garanti sur le runtime Edge).
@@ -29,6 +30,21 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 export async function POST(request: Request) {
+  // 0. Garde-fou de coût : chaque requête admise déclenche un appel modèle
+  // payant. Vérifié AVANT toute autre chose (testable sans coût).
+  const verdict = checkRateLimit(clientIp(request));
+  if (!verdict.allowed) {
+    return NextResponse.json(
+      {
+        error: `Trop de demandes d'analyse. Réessayez dans ${verdict.retryAfterSeconds} s.`,
+      },
+      {
+        status: 429,
+        headers: { "Retry-After": String(verdict.retryAfterSeconds) },
+      },
+    );
+  }
+
   // 1. Corps JSON parsable ?
   let body: unknown;
   try {

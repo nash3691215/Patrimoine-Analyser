@@ -35,18 +35,25 @@ export type Analysis = z.infer<typeof analysisSchema>;
 /**
  * Schéma de la requête entrante de /api/analyze.
  * On revalide la saisie côté serveur : ne jamais faire confiance au client.
+ * Bornes hautes : au-delà de toute situation patrimoniale plausible, on
+ * refuse — chaque requête acceptée déclenche un appel modèle payant.
  */
+const MONTANT_MAX = 1_000_000_000; // 1 Md€ par classe d'actifs
+const DEPENSES_MAX = 1_000_000; // 1 M€ de dépenses mensuelles
+
+const montant = z.number().finite().nonnegative().max(MONTANT_MAX);
+
 export const analyzeRequestSchema = z.object({
   allocations: z.object({
-    immo_residence: z.number().nonnegative(),
-    immo_locatif: z.number().nonnegative(),
-    actions_etf: z.number().nonnegative(),
-    livrets_fonds_euros: z.number().nonnegative(),
-    crypto: z.number().nonnegative(),
-    liquidites: z.number().nonnegative(),
-    autres: z.number().nonnegative(),
+    immo_residence: montant,
+    immo_locatif: montant,
+    actions_etf: montant,
+    livrets_fonds_euros: montant,
+    crypto: montant,
+    liquidites: montant,
+    autres: montant,
   }),
-  depensesMensuelles: z.number().nonnegative(),
+  depensesMensuelles: z.number().finite().nonnegative().max(DEPENSES_MAX),
   horizon: z.enum(["court", "moyen", "long"]),
 });
 
